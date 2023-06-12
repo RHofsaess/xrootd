@@ -6,7 +6,7 @@ include( XRootDCommon )
 set( LIB_XRD_FILECACHE  XrdPfc-${PLUGIN_VERSION} )
 set( LIB_XRD_FILECACHE_LEGACY XrdFileCache-${PLUGIN_VERSION} )
 set( LIB_XRD_BLACKLIST  XrdBlacklistDecision-${PLUGIN_VERSION} )
-
+set( LIB_XRD_CACHINGDECISION  XrdCachingDecision-${PLUGIN_VERSION} )
 #-------------------------------------------------------------------------------
 # Shared library version
 #-------------------------------------------------------------------------------
@@ -65,6 +65,27 @@ set_target_properties(
   LINK_INTERFACE_LIBRARIES "" )
 
 #-------------------------------------------------------------------------------
+# The XrdCachingDecision library
+#-------------------------------------------------------------------------------
+add_library(
+  ${LIB_XRD_CACHINGDECISION}
+  MODULE
+  XrdPfc/XrdPfcCachingDecision.cc
+)
+
+target_link_libraries(
+  ${LIB_XRD_CACHINGDECISION}
+  XrdUtils
+  -lstdc++fs
+)
+
+set_target_properties(
+  ${LIB_XRD_CACHINGDECISION}
+  PROPERTIES
+  INTERFACE_LINK_LIBRARIES ""
+  LINK_INTERFACE_LIBRARIES "" )
+
+#-------------------------------------------------------------------------------
 # xrdpfc_print
 #-------------------------------------------------------------------------------
 add_executable(
@@ -94,6 +115,10 @@ install(
 
 install(
   TARGETS ${LIB_XRD_BLACKLIST}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+
+install(
+  TARGETS ${LIB_XRD_CACHINGECISION}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 
 install(
