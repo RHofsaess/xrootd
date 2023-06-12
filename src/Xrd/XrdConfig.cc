@@ -274,6 +274,8 @@ XrdConfig::XrdConfig()
    NetADM     = 0;
    coreV      = 1;
    Specs      = 0;
+   isStrict   = false;
+   maxFD      = 256*1024;  // 256K default
 
    Firstcp = Lastcp = 0;
 
@@ -805,6 +807,7 @@ int XrdConfig::ConfigXeq(char *var, XrdOucStream &Config, XrdSysError *eDest)
    TS_Xeq("adminpath",     xapath);
    TS_Xeq("allow",         xallow);
    TS_Xeq("homepath",      xhpath);
+   TS_Xeq("maxfd",         xmaxfd);
    TS_Xeq("pidpath",       xpidf);
    TS_Xeq("port",          xport);
    TS_Xeq("protocol",      xprot);
@@ -1176,7 +1179,6 @@ void XrdConfig::setCFG(bool start)
   
 int XrdConfig::setFDL()
 {
-   static const int maxFD = 65535; // was 1048576 see XrdNetAddrInfo::sockNum
    struct rlimit rlim;
    char buff[100];
 
@@ -1187,7 +1189,8 @@ int XrdConfig::setFDL()
 
 // Set the limit to the maximum allowed
 //
-   if (rlim.rlim_max == RLIM_INFINITY || rlim.rlim_max > maxFD) rlim.rlim_cur = maxFD;
+   if (rlim.rlim_max == RLIM_INFINITY || (isStrict && rlim.rlim_max > maxFD))
+      rlim.rlim_cur = maxFD;
       else rlim.rlim_cur = rlim.rlim_max;
 #if (defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_5))
    if (rlim.rlim_cur > OPEN_MAX) rlim.rlim_max = rlim.rlim_cur = OPEN_MAX;
@@ -1646,6 +1649,46 @@ int XrdConfig::xbuf(XrdSysError *eDest, XrdOucStream &Config)
           return 1;
 
     BuffPool.Set((int)blim, bint);
+    return 0;
+}
+
+
+/******************************************************************************/
+/*                                x m a x f d                                 */
+/******************************************************************************/
+
+/* Function: xmaxfd
+
+   Purpose:  To parse the directive: maxfd [strict] <numfd>
+
+             strict     when specified, the limits is always applied. Otherwise,
+                        it is only applied when rlimit is infinite.
+             <numfd>    maximum number of fs that can be established.
+                        Specify a value optionally suffixed with 'k'.
+
+   Output: 0 upon success or !0 upon failure.
+*/
+int XrdConfig::xmaxfd(XrdSysError *eDest, XrdOucStream &Config)
+{
+    long long minV = 1024, maxV = 1024LL*1024LL; // between 1k and 1m
+    long long fdVal;
+    char *val;
+
+    if ((val = Config.GetWord()))
+       {if (!strcmp(val, "strict")) 
+           {isStrict = true;
+            val = Config.GetWord();
+           } else isStrict = false;
+       }
+
+    if (!val)
+       {eDest->Emsg("Config", "file descriptor limit not specified"); return 1;}
+
+
+    if (XrdOuca2x::a2sz(*eDest,"maxfd value",val,&fdVal,minV,maxV)) return 1;
+
+    maxFD = static_cast<unsigned int>(fdVal);
+
     return 0;
 }
 

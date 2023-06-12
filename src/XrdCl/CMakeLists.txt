@@ -1,5 +1,4 @@
 
-include( XRootDCommon )
 
 #-------------------------------------------------------------------------------
 # Shared library version
@@ -109,6 +108,7 @@ add_library(
 
 target_link_libraries(
   XrdCl
+  PRIVATE
   XrdXml
   XrdUtils
   uuid::uuid
@@ -126,7 +126,7 @@ set_target_properties(
 
 if( BUILD_XRDEC )
   target_include_directories(XrdCl PUBLIC ${ISAL_INCLUDE_DIRS})
-  target_link_libraries(XrdCl ${ISAL_LIBRARIES})
+  target_link_libraries(XrdCl PRIVATE ${ISAL_LIBRARIES})
 endif()
 
 #-------------------------------------------------------------------------------
@@ -158,6 +158,7 @@ add_executable(
 target_link_libraries(
   xrdcp
   XrdCl
+  XrdUtils
   XrdAppUtils )
 endif()
 
@@ -250,7 +251,7 @@ install(
       MESSAGE( \"-- Processing: \" \$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}/man1/\${MANPAGE} )
       EXECUTE_PROCESS(
         COMMAND cat \${MANPAGE}
-        COMMAND sed  -e \"s/__VERSION__/${XROOTD_VERSION}/\"
+        COMMAND sed  -e \"s/__VERSION__/${XRootD_VERSION}/\"
         OUTPUT_FILE \${MANPAGE}.new
         WORKING_DIRECTORY \$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}/man1 )
       EXECUTE_PROCESS(

@@ -1531,6 +1531,7 @@ int XrdHttpProtocol::StartSimpleResp(int code, const char *desc, const char *hea
     else if (code == 404) ss << "Not Found";
     else if (code == 405) ss << "Method Not Allowed";
     else if (code == 500) ss << "Internal Server Error";
+    else if (code == 400) ss << "Bad Request";
     else ss << "Unknown";
   }
   ss << crlf;
@@ -1579,10 +1580,11 @@ int XrdHttpProtocol::StartChunkedResp(int code, const char *desc, const char *he
 /******************************************************************************/
   
 int XrdHttpProtocol::ChunkResp(const char *body, long long bodylen) {
-  if (ChunkRespHeader((bodylen <= 0) ? (body ? strlen(body) : 0) : bodylen))
+  long long content_length = (bodylen <= 0) ? (body ? strlen(body) : 0) : bodylen;
+  if (ChunkRespHeader(content_length))
     return -1;
 
-  if (body && SendData(body, bodylen))
+  if (body && SendData(body, content_length))
     return -1;
 
   return ChunkRespFooter();

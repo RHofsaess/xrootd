@@ -1,4 +1,3 @@
-include( XRootDCommon )
 
 #-------------------------------------------------------------------------------
 # Modules
@@ -33,17 +32,12 @@ add_library(
 
 target_link_libraries(
   ${LIB_XRD_FILECACHE}
+  PRIVATE
 # XrdPosix
   XrdCl
   XrdUtils
   XrdServer
   ${CMAKE_THREAD_LIBS_INIT} )
-
-set_target_properties(
-  ${LIB_XRD_FILECACHE}
-  PROPERTIES
-  INTERFACE_LINK_LIBRARIES ""
-  LINK_INTERFACE_LIBRARIES "" )
 
 #-------------------------------------------------------------------------------
 # The XrdBlacklistDecision library
@@ -55,14 +49,9 @@ add_library(
 
 target_link_libraries(
   ${LIB_XRD_BLACKLIST}
+  PRIVATE
   XrdUtils
   )
-
-set_target_properties(
-  ${LIB_XRD_BLACKLIST}
-  PROPERTIES
-  INTERFACE_LINK_LIBRARIES ""
-  LINK_INTERFACE_LIBRARIES "" )
 
 #-------------------------------------------------------------------------------
 # The XrdCachingDecision library

@@ -184,11 +184,10 @@ int XrdHttpReq::parseLine(char *line, int len) {
 
     } else if (!strcmp(key, "Expect") && strstr(val, "100-continue")) {
       sendcontinue = true;
-    } else if (!strcasecmp(key, "Transfer-Encoding") && strstr(val, "chunked")) {
-      m_transfer_encoding_chunked = true;
     } else if (!strcasecmp(key, "TE") && strstr(val, "trailers")) {
       m_trailer_headers = true;
     } else if (!strcasecmp(key, "X-Transfer-Status") && strstr(val, "true")) {
+      m_transfer_encoding_chunked = true;
       m_status_trailer = true;
     } else {
       // Some headers need to be translated into "local" cgi info.
@@ -927,7 +926,14 @@ void XrdHttpReq::mapXrdErrorToHttpStatus() {
         httpStatusCode = 409; httpStatusText = "Resource is a directory";
         break;
       case kXR_ItExists:
-        httpStatusCode = 409; httpStatusText = "File already exists";
+        if(request != ReqType::rtDELETE) {
+          httpStatusCode = 409; httpStatusText = "File already exists";
+        } else {
+          // In the case the XRootD layer returns a kXR_ItExists after a deletion
+          // was submitted, we return a 405 status code with the error message set by
+          // the XRootD layer
+          httpStatusCode = 405;
+        }
         break;
       case kXR_InvalidRequest:
         httpStatusCode = 405; httpStatusText = "Method is not allowed";
@@ -1799,7 +1805,7 @@ XrdHttpReq::PostProcessChecksum(std::string &digest_header) {
     if (convert_to_base64) {free(digest_value);}
     return 0;
   } else {
-    prot->SendSimpleResp(500, NULL, NULL, "Underlying filesystem failed to calculate checksum.", 0, false);
+    prot->SendSimpleResp(httpStatusCode, NULL, NULL, httpStatusText.c_str(), httpStatusText.length(), false);
     return -1;
   }
 }
@@ -2212,6 +2218,12 @@ int XrdHttpReq::PostProcessHTTPReq(bool final_) {
                 return 0;
               } else
                 if (rwOps.size() > 1) {
+                // First, check that the amount of range request can be handled by the vector read of the XRoot layer
+                if(rwOps.size() > XrdProto::maxRvecsz) {
+                  std::string errMsg = "Too many range requests provided. Maximum range requests supported is " + std::to_string(XrdProto::maxRvecsz);
+                  prot->SendSimpleResp(400, NULL, NULL,errMsg.c_str(), errMsg.size(), false);
+                  return -1;
+                }
                 // Multiple reads to perform, compose and send the header
                 int cnt = 0;
                 for (size_t i = 0; i < rwOps.size(); i++) {

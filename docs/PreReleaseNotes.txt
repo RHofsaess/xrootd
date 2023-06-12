@@ -1,4 +1,6 @@
 ======
+
+
 XRootD
 ======
 
@@ -6,6 +8,12 @@ Prerelease Notes
 ================
 
 + **New Features**
+  **[Server]** Allow generic prepare plug-in to handle large responses, fixes #2023
+  **Commit: 564f0b2
+  **[Server]** Make maxfd be configurable (default is 256k).
+  **Commit: 937b5ee e1ba7a2
+  **[Client]** Add xrdfs cache subcommand to allow for cache evictions.
+  **Commit: 39f9e0a
   **[Xcache]** Implement a file evict function.
   **Commit: 952bd9a
   **[PSS]** Allow origin to be a directory of a locally mounted file system.
@@ -18,5 +26,9 @@ Prerelease Notes
 + **Major bug fixes**
 
 + **Minor bug fixes**
+  **[TLS]** Make sure context is marked invalid if not properly constructed.
+  **Commit: c6928f0
 
 + **Miscellaneous**
+  **[Server]** Also check for IPv6 ULA's to determine if an address is private.
+  **Commit: cd970d5
